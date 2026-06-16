@@ -115,9 +115,6 @@ flex-shrink: 0;
 .sucursal-name { font-weight: 700; font-size: 1rem; color: #1a1a1a; }
 .sucursal-address { font-size: 0.8rem; color: #6b7280; margin-top: 4px; }
 .sucursal-actions { display: flex; gap: 8px; margin-top: 10px; }
-.pago-card { background: white; border-radius: 16px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid #16a34a; }
-.pago-name { font-weight: 700; color: #1a1a1a; }
-.pago-detail { font-size: 0.8rem; color: #6b7280; margin-top: 4px; }
 .historial-btn { width: 100%; padding: 14px; border-radius: 30px; font-size: 0.95rem; font-weight: 700; cursor: pointer; margin-bottom: 10px; border: none; color: white; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3); }
 .historial-label { font-size: 0.75rem; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
 .historial-input { width: 100%; padding: 10px 14px; border: 2px solid #e5e7eb; border-radius: 12px; font-size: 0.85rem; margin-bottom: 10px; }
@@ -667,7 +664,7 @@ text-align: center;
 .alumno-avatar { width: 48px; height: 48px; }
 .alumno-name { font-size: 0.9rem; }
 .btn-whatsapp { font-size: 0.7rem; padding: 5px 10px; }
-.sucursal-card, .pago-card, .pase-cinta-card { padding: 14px; }
+.sucursal-card, .pase-cinta-card { padding: 14px; }
 .examen-card { padding: 14px; }
 .modal { padding: 24px; margin: 10px; }
 .loading-title { font-size: 1.5rem; }
@@ -701,11 +698,9 @@ text-align: center;
 .alumno-detail { font-size: 0.7rem; }
 .alumno-cinturon { font-size: 0.65rem; padding: 2px 8px; }
 .btn-whatsapp { font-size: 0.65rem; padding: 4px 8px; }
-.sucursal-card, .pago-card, .pase-cinta-card, .examen-card { padding: 12px; margin-bottom: 10px; }
+.sucursal-card, .pase-cinta-card, .examen-card { padding: 12px; margin-bottom: 10px; }
 .sucursal-name { font-size: 0.9rem; }
 .sucursal-address { font-size: 0.75rem; }
-.pago-name { font-size: 0.9rem; }
-.pago-detail { font-size: 0.75rem; }
 .pase-cinta-nombre { font-size: 0.85rem; }
 .pase-cinta-cambio { font-size: 0.75rem; }
 .examen-nombre { font-size: 0.9rem; }
@@ -991,29 +986,6 @@ text-align: center;
 <div class="section-divider"></div>
 <div id="listaSucursales"></div>
 </section>
-<section id="sec-pagos" class="hidden-section">
-<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-<h2 class="section-title">Registro de Pagos</h2><span class="section-icon"><i class="fas fa-coins"></i></span>
-</div>
-<div class="section-divider"></div>
-<div class="card">
-<form id="formPago">
-<label class="form-label">💰 Alumno <span class="required">*</span></label>
-<select id="selectAlumnoPago" required class="form-select"><option value="">Seleccione un alumno...</option></select>
-<label class="form-label">Monto ($ USD) <span class="required">*</span></label>
-<input type="number" id="montoPago" step="0.01" required class="form-input" placeholder="0.00">
-<label class="form-label">Concepto <span class="required">*</span></label>
-<select id="conceptoPago" required class="form-select">
-<option value="Mensualidad">Mensualidad</option><option value="Inscripción">Inscripción</option>
-<option value="Examen de Cinta">Examen de Cinta</option><option value="Uniforme / Karategi">Uniforme / Karategi</option>
-</select>
-<button type="submit" class="btn-primary">Registrar Pago</button>
-</form>
-</div>
-<h2 class="section-title" style="margin-top: 20px;">Historial de Pagos</h2>
-<div class="section-divider"></div>
-<div id="listaPagos"></div>
-</section>
 <section id="sec-backup" class="hidden-section">
 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
 <h2 class="section-title">Backup de Datos</h2><span class="section-icon"><i class="fas fa-database"></i></span>
@@ -1040,7 +1012,7 @@ text-align: center;
 <div class="bottom-nav">
 <button onclick="showSection('sucursales')" class="nav-item" id="nav-sucursales"><i class="fas fa-building"></i><span>Sucursales</span></button>
 <button onclick="showSection('kata')" class="nav-item" id="nav-kata"><i class="fas fa-yin-yang"></i><span>Kata</span></button>
-<button onclick="showSection('pagos')" class="nav-item" id="nav-pagos"><i class="fas fa-coins"></i><span>Pagos</span></button>
+<button onclick="window.location.href='pagos.html'" class="nav-item" id="nav-pagos"><i class="fas fa-coins"></i><span>Pagos</span></button>
 <button onclick="showSection('backup')" class="nav-item" id="nav-backup"><i class="fas fa-database"></i><span>Backup</span></button>
 </div>
 </div>
@@ -1270,7 +1242,7 @@ if (id === 'alumnos') renderDirectorio();
 if (id === 'kata') renderExamenes();
 if (id === 'pase-cinta') { actualizarSelects(); actualizarSelectCinturasAspira(); actualizarSelectEvaluadores(); renderHistorialPases(); }
 if (id === 'sucursales') renderSucursales();
-if (id === 'pagos') renderPagos();
+if (id === 'backup') {}
 }
 function calcularEdad() {
 const fechaNac = document.getElementById('fechaNac').value;
@@ -1400,8 +1372,6 @@ dbLocal.pagos = dbLocal.pagos.filter(p => p.alumnoId !== id);
 dbLocal.pasesCinta = dbLocal.pasesCinta.filter(p => p.alumnoId !== id);
 actualizarSelects();
 renderDirectorio();
-renderPagos();
-renderHistorialPases();
 showToast('success', 'Alumno Eliminado', `${alumno.nombre} ha sido eliminado del sistema`);
 } catch (error) {
 showToast('error', 'Error', 'No se pudo eliminar el alumno');
@@ -1518,7 +1488,6 @@ const optsSuc = dbLocal.sucursales.map(s => `<option value="${s.nombre}">${s.nom
 document.getElementById('sucursalAlumno').innerHTML = '<option value="">Seleccione una sucursal...</option>' + optsSuc;
 const optsAlum = dbLocal.alumnos.map(a => `<option value="${a.id}">${a.nombre} (${a.cinturon})</option>`).join('');
 document.getElementById('selectAlumnoHistorial').innerHTML = '<option value="">Seleccione un alumno...</option>' + optsAlum;
-document.getElementById('selectAlumnoPago').innerHTML = '<option value="">Seleccione un alumno...</option>' + optsAlum;
 const selectPase = document.getElementById('selectAlumnoPase');
 if (selectPase) selectPase.innerHTML = '<option value="">Seleccione un alumno...</option>' + optsAlum;
 }
@@ -2121,57 +2090,6 @@ ocultarSpinner();
 },
 true
 );
-}
-document.getElementById('formPago').addEventListener('submit', async (e) => {
-e.preventDefault();
-mostrarSpinner();
-try {
-const alumnoId = document.getElementById('selectAlumnoPago').value;
-const alumno = dbLocal.alumnos.find(a => a.id === alumnoId);
-const pagoData = {
-alumnoId: alumnoId,
-alumnoNombre: alumno ? alumno.nombre : 'Desconocido',
-monto: parseFloat(document.getElementById('montoPago').value),
-concepto: document.getElementById('conceptoPago').value,
-fecha: new Date().toLocaleDateString(),
-fechaRegistro: new Date().toISOString()
-};
-const docRef = await db.collection('pagos').add(pagoData);
-dbLocal.pagos.push({ id: docRef.id, ...pagoData });
-renderPagos();
-e.target.reset();
-showToast('success', 'Pago Registrado', `Pago de $${document.getElementById('montoPago').value} registrado en la nube`);
-} catch (error) {
-showToast('error', 'Error', 'No se pudo registrar el pago');
-}
-ocultarSpinner();
-});
-function renderPagos() {
-const lista = document.getElementById('listaPagos');
-if (dbLocal.pagos.length === 0) { lista.innerHTML = '<p style="text-align: center; color: #9ca3af; padding: 20px;">No hay pagos registrados</p>'; return; }
-lista.innerHTML = dbLocal.pagos.slice().reverse().map(p => `
-<div class="pago-card">
-<div class="pago-name">${p.alumnoNombre}</div>
-<div class="pago-detail">Monto: $${p.monto.toFixed(2)} USD</div>
-<div class="pago-detail">Concepto: ${p.concepto}</div>
-<div class="pago-detail">Fecha: ${p.fecha}</div>
-<button onclick="eliminarPago('${p.id}')" class="btn-danger" style="margin-top: 8px; padding: 6px 14px; font-size: 0.8rem;">Eliminar</button>
-</div>
-`).join('');
-}
-async function eliminarPago(id) {
-mostrarModal('Eliminar Pago', '¿Estás seguro que deseas eliminar este pago?', async () => {
-mostrarSpinner();
-try {
-await db.collection('pagos').doc(id).delete();
-dbLocal.pagos = dbLocal.pagos.filter(p => p.id !== id);
-renderPagos();
-showToast('success', 'Pago Eliminado', 'El pago ha sido eliminado');
-} catch (error) {
-showToast('error', 'Error', 'No se pudo eliminar el pago');
-}
-ocultarSpinner();
-});
 }
 function exportarExcel() {
 mostrarSpinner();
