@@ -319,7 +319,7 @@ select.innerHTML = '<option value="todas">Todas las Sucursales</option>' + sucur
 
 function renderDashboard() {
 const sucursalSeleccionada = document.getElementById('selectSucursal').value;
-const alumnosFiltrados = sucursalSeleccionada === 'todas' ? dbLocal.alumnos : dbLocal.alumnos.filter(a => a.sucursal === sucursalSeleccionada);
+const alumnosFiltrados = (sucursalSeleccionada === 'todas' ? dbLocal.alumnos : dbLocal.alumnos.filter(a => a.sucursal === sucursalSeleccionada)).filter(a => a.tipoInscripcion !== 'Sensei');
 const alumnoIdsSucursal = alumnosFiltrados.map(a => a.id);
 const pagosFiltrados = dbLocal.pagos.filter(p => alumnoIdsSucursal.includes(p.alumnoId));
 const totalAlumnos = alumnosFiltrados.length;
@@ -364,15 +364,13 @@ function renderCobranza() {
 const mesSeleccionado = document.getElementById('selectMesCobranza').value;
 const container = document.getElementById('listaCobranza');
 
-// ✅ Filtrar pagos que tengan el mes seleccionado
 const alumnosConPago = new Set(
 dbLocal.pagos
 .filter(p => p.mes === mesSeleccionado)
 .map(p => p.alumnoId)
 );
 
-// ✅ Filtrar alumnos que NO han pagado ese mes
-const alumnosPendientes = dbLocal.alumnos.filter(a => !alumnosConPago.has(a.id));
+const alumnosPendientes = dbLocal.alumnos.filter(a => !alumnosConPago.has(a.id) && a.tipoInscripcion !== 'Sensei');
 
 if (alumnosPendientes.length === 0) {
 container.innerHTML = `
@@ -454,16 +452,23 @@ function showSection(id) {
 document.querySelectorAll('.main-system section').forEach(sec => sec.classList.add('hidden-section'));
 document.getElementById('sec-' + id).classList.remove('hidden-section');
 document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-event.currentTarget.classList.add('active');
+
+const navButtons = document.querySelectorAll('.bottom-nav .nav-item');
+const sectionMap = { 'inicio': 0, 'pagos': 1, 'cobranza': 2, 'historial': 3 };
+if (sectionMap[id] !== undefined && navButtons[sectionMap[id]]) {
+    navButtons[sectionMap[id]].classList.add('active');
+} else if (typeof event !== 'undefined' && event && event.currentTarget) {
+    event.currentTarget.classList.add('active');
+}
+
 if (id === 'inicio') renderDashboard();
 if (id === 'cobranza') renderCobranza();
 if (id === 'historial') renderPagos();
 }
 
 function actualizarSelects() {
-const optsAlum = dbLocal.alumnos.map(a => `<option value="${a.id}">${a.nombre} (${a.cinturon})</option>`).join('');
+const optsAlum = dbLocal.alumnos.filter(a => a.tipoInscripcion !== 'Sensei').map(a => `<option value="${a.id}">${a.nombre} (${a.cinturon})</option>`).join('');
 document.getElementById('selectAlumnoPago').innerHTML = '<option value="">Seleccione un alumno...</option>' + optsAlum;
-// ✅ Establecer mes actual por defecto en el formulario
 const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 document.getElementById('mesPago').value = meses[new Date().getMonth()];
 }
@@ -477,7 +482,7 @@ const alumno = dbLocal.alumnos.find(a => a.id === alumnoId);
 const pagoData = {
 alumnoId: alumnoId,
 alumnoNombre: alumno ? alumno.nombre : 'Desconocido',
-mes: document.getElementById('mesPago').value, // ✅ GUARDAR EL MES
+mes: document.getElementById('mesPago').value,
 monto: parseFloat(document.getElementById('montoPago').value),
 concepto: document.getElementById('conceptoPago').value,
 fecha: new Date().toLocaleDateString(),
@@ -486,7 +491,6 @@ fechaRegistro: new Date().toISOString()
 const docRef = await db.collection('pagos').add(pagoData);
 dbLocal.pagos.push({ id: docRef.id, ...pagoData });
 e.target.reset();
-// ✅ Restablecer mes actual
 const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 document.getElementById('mesPago').value = meses[new Date().getMonth()];
 showToast('success', 'Pago Registrado', `Pago de $${pagoData.monto} registrado para ${pagoData.mes}`);
