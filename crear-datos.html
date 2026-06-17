@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crear Datos - Dojo Karate</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=Roboto:wght@300;400;500;700&display=swap');
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Roboto', sans-serif; background: #f5f5f5; }
+.dojo-title { font-family: 'Cinzel Decorative', serif; }
+.dojo-subtitle { font-family: 'Cinzel', serif; }
+.main-system { min-height: 100vh; background: #f5f5f5; padding-bottom: 60px; }
+.app-header { background: #1a1a1a; padding: 8px 10px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 10px rgba(0,0,0,0.3); gap: 6px; flex-wrap: nowrap; }
+.header-logo { width: 32px; height: 32px; flex-shrink: 0; }
+.btn-header { flex: 1; background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); border: 1px solid #dc2626; color: white; padding: 6px 8px; border-radius: 18px; cursor: pointer; font-size: 0.65rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.3s; text-transform: uppercase; letter-spacing: 0.03em; box-shadow: 0 2px 6px rgba(220, 38, 38, 0.3); min-width: 0; }
+.btn-header:hover { background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); box-shadow: 0 4px 10px rgba(220, 38, 38, 0.5); transform: translateY(-1px); }
+.btn-header.active { background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); box-shadow: 0 0 12px rgba(220, 38, 38, 0.8); }
+.btn-header i { font-size: 0.85rem; }
+.btn-header span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.content-area { padding: 16px; max-width: 600px; margin: 0 auto; }
+.section-title { font-size: 1.4rem; font-weight: 700; color: #1a1a1a; margin-bottom: 4px; font-style: italic; }
+.section-divider { height: 3px; background: #dc2626; margin-bottom: 20px; border-radius: 2px; }
+.section-icon { float: right; font-size: 1.5rem; color: #dc2626; background: #fee2e2; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px; }
+.card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.form-label { display: block; font-size: 0.75rem; font-weight: 700; color: #374151; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+.form-label .required { color: #dc2626; }
+.form-input { width: 100%; padding: 12px 14px; border: 2px solid #e5e7eb; border-radius: 12px; font-size: 0.9rem; margin-bottom: 14px; transition: border-color 0.3s; background: white; }
+.form-input:focus { outline: none; border-color: #dc2626; }
+.form-input:disabled { background: #f3f4f6; cursor: not-allowed; }
+.form-select { width: 100%; padding: 12px 14px; border: 2px solid #e5e7eb; border-radius: 12px; font-size: 0.9rem; margin-bottom: 14px; background: white; cursor: pointer; }
+.form-select:focus { outline: none; border-color: #dc2626; }
+.btn-primary { width: 100%; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; border: none; padding: 14px; border-radius: 30px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4); }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(220, 38, 38, 0.6); }
+.btn-secondary { background: #6b7280; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; margin-right: 8px; }
+.btn-danger { background: #dc2626; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; }
+.btn-edit { background: #f59e0b; color: white; border: none; padding: 6px 14px; border-radius: 15px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+.btn-edit:hover { background: #d97706; }
+.btn-add-item { background: #2563eb; color: white; border: none; padding: 10px 16px; border-radius: 12px; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.3s; }
+.btn-add-item:hover { background: #1d4ed8; transform: translateY(-1px); }
+.search-input { width: 100%; padding: 10px 14px; border: 2px solid #e5e7eb; border-radius: 12px; font-size: 0.85rem; margin-bottom: 14px; }
+.search-input:focus { outline: none; border-color: #dc2626; }
+.examen-card { background: white; border-radius: 16px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid #d4a843; }
+.examen-card.border-blanco { border-left-color: #e5e7eb; }
+.examen-card.border-amarillo { border-left-color: #fbbf24; }
+.examen-card.border-verde { border-left-color: #22c55e; }
+.examen-card.border-azul { border-left-color: #3b82f6; }
+.examen-card.border-marron { border-left-color: #92400e; }
+.examen-card.border-negro { border-left-color: #1a1a1a; }
+.examen-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.examen-nombre { font-weight: 700; font-size: 1rem; color: #1a1a1a; }
+.examen-cinta { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 15px; font-size: 0.75rem; font-weight: 600; margin-bottom: 10px; }
+.cinta-blanco { background: #f9fafb; color: #1a1a1a; border: 1px solid #e5e7eb; }
+.cinta-amarillo { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+.cinta-verde { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+.cinta-azul { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+.cinta-marron { background: #fed7aa; color: #9a3412; border: 1px solid #fdba74; }
+.cinta-negro { background: #1a1a1a; color: #ffffff; border: 1px solid #374151; }
+.examen-items { list-style: none; padding: 0; margin: 0; }
+.examen-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: #f9fafb; border-radius: 8px; margin-bottom: 6px; font-size: 0.85rem; color: #374151; }
+.examen-item-numero { background: #dc2626; color: white; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; flex-shrink: 0; }
+.examen-item-texto { flex: 1; }
+.examen-item-peso { background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 8px; font-size: 0.7rem; font-weight: 600; }
+.examen-item-eliminar { background: transparent; border: none; color: #dc2626; cursor: pointer; font-size: 1rem; padding: 4px; transition: transform 0.2s; }
+.examen-item-eliminar:hover { transform: scale(1.2); }
+.items-container { max-height: 300px; overflow-y: auto; margin-bottom: 14px; padding-right: 4px; }
+.items-container::-webkit-scrollbar { width: 6px; }
+.items-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; }
+.items-container::-webkit-scrollbar-thumb { background: #dc2626; border-radius: 3px; }
+.add-item-row { display: flex; gap: 8px; margin-bottom: 14px; align-items: center; }
+.add-item-row .form-input { margin-bottom: 0; flex: 1; }
+.add-item-peso-input { width: 80px; padding: 10px; border: 2px solid #e5e7eb; border-radius: 12px; font-size: 0.9rem; text-align: center; }
+.add-item-peso-input:focus { outline: none; border-color: #dc2626; }
+.sucursal-card { background: white; border-radius: 16px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.sucursal-name { font-weight: 700; font-size: 1rem; color: #1a1a1a; }
+.sucursal-address { font-size: 0.8rem; color: #6b7280; margin-top: 4px; }
+.sucursal-actions { display: flex; gap: 8px; margin-top: 10px; }
+.hidden-section { display: none; }
+.toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; max-width: 350px; pointer-events: none; }
+.toast { background: white; border-radius: 12px; padding: 16px 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 12px; animation: slideInRight 0.3s ease-out; border-left: 4px solid; pointer-events: auto; }
+.toast.success { border-left-color: #16a34a; }
+.toast.error { border-left-color: #dc2626; }
+.toast.warning { border-left-color: #f59e0b; }
+.toast.info { border-left-color: #3b82f6; }
+.toast-icon { font-size: 1.5rem; flex-shrink: 0; }
+.toast.success .toast-icon { color: #16a34a; }
+.toast.error .toast-icon { color: #dc2626; }
+.toast.warning .toast-icon { color: #f59e0b; }
+.toast.info .toast-icon { color: #3b82f6; }
+.toast-content { flex: 1; }
+.toast-title { font-weight: 700; font-size: 0.9rem; color: #1a1a1a; margin-bottom: 2px; }
+.toast-message { font-size: 0.8rem; color: #6b7280; }
+.toast-close { background: transparent; border: none; color: #9ca3af; cursor: pointer; font-size: 1.2rem; padding: 4px; }
+@keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes slideOutRight { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+.spinner-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 9998; }
+.spinner-overlay.active { display: flex; }
+.spinner { width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.3); border-top-color: #dc2626; border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 9997; padding: 20px; }
+.modal-overlay.active { display: flex; }
+.modal { background: white; border-radius: 16px; padding: 30px; max-width: 450px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.3); animation: modalFadeIn 0.3s ease-out; }
+@keyframes modalFadeIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.modal-title { font-size: 1.3rem; font-weight: 700; color: #1a1a1a; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+.modal-message { font-size: 0.9rem; color: #6b7280; margin-bottom: 20px; line-height: 1.5; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.modal-btn { padding: 10px 20px; border-radius: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer; border: none; }
+.modal-btn-cancel { background: #e5e7eb; color: #374151; }
+.modal-btn-confirm { background: #dc2626; color: white; }
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%); border-top: 2px solid rgba(220, 38, 38, 0.3); display: flex; justify-content: space-around; padding: 10px 0 14px 0; z-index: 100; box-shadow: 0 -4px 20px rgba(0,0,0,0.5); }
+.nav-item { display: flex; flex-direction: column; align-items: center; color: #9ca3af; cursor: pointer; padding: 6px 10px; border-radius: 12px; transition: all 0.3s ease; border: none; background: transparent; font-size: 0.7rem; flex: 1; }
+.nav-item:hover, .nav-item.active { color: #dc2626; background: rgba(220, 38, 38, 0.1); }
+.nav-item.active { border-top: 2px solid #dc2626; }
+.nav-item i { font-size: 1.25rem; margin-bottom: 4px; }
+@media (max-width: 768px) { .content-area { padding: 14px; } .section-title { font-size: 1.3rem; } .card { padding: 18px; } .form-input, .form-select { font-size: 0.85rem; padding: 11px 13px; } .btn-primary { padding: 13px; font-size: 0.95rem; } .sucursal-card { padding: 14px; } .examen-card { padding: 14px; } .modal { padding: 24px; margin: 10px; } }
+@media (max-width: 640px) { .content-area { padding: 12px; } .section-title { font-size: 1.2rem; } .btn-header span { display: none; } .btn-header { padding: 6px 10px; } .btn-header i { font-size: 1rem; } .app-header { padding: 8px 8px; gap: 4px; } .toast-container { left: 20px; right: 20px; max-width: none; } }
+@media (max-width: 480px) { .content-area { padding: 10px; } .section-title { font-size: 1.1rem; } .card { padding: 14px; border-radius: 12px; } .form-label { font-size: 0.7rem; } .form-input, .form-select { font-size: 0.8rem; padding: 10px 12px; margin-bottom: 12px; } .btn-primary { padding: 12px; font-size: 0.9rem; border-radius: 25px; } .btn-secondary, .btn-danger { padding: 8px 16px; font-size: 0.75rem; } .btn-edit { padding: 5px 12px; font-size: 0.7rem; } .sucursal-card, .examen-card { padding: 12px; margin-bottom: 10px; } .sucursal-name { font-size: 0.9rem; } .sucursal-address { font-size: 0.75rem; } .examen-nombre { font-size: 0.9rem; } .examen-cinta { font-size: 0.7rem; padding: 3px 10px; } .examen-item { font-size: 0.75rem; padding: 6px 10px; } .examen-item-numero { width: 20px; height: 20px; font-size: 0.65rem; } .app-header { padding: 6px 6px; gap: 3px; } .header-logo { width: 28px; height: 28px; } .btn-header { padding: 5px 8px; font-size: 0.6rem; } .btn-header i { font-size: 0.9rem; } .bottom-nav { padding: 8px 0 10px 0; } .nav-item { font-size: 0.6rem; padding: 5px 8px; } .nav-item i { font-size: 1.1rem; margin-bottom: 3px; } .modal { padding: 20px; margin: 8px; } .modal-title { font-size: 1.1rem; } .modal-message { font-size: 0.8rem; } .modal-btn { padding: 8px 16px; font-size: 0.8rem; } .toast-container { left: 10px; right: 10px; top: 10px; max-width: none; } .toast { padding: 12px 16px; } .toast-title { font-size: 0.8rem; } .toast-message { font-size: 0.7rem; } }
+@media (max-width: 360px) { .content-area { padding: 8px; } .card { padding: 12px; } .btn-header span { display: none; } .btn-header { padding: 5px 6px; } .app-header { gap: 2px; } }
+</style>
+</head>
+<body>
+
+<div class="toast-container" id="toastContainer"></div>
+<div class="spinner-overlay" id="spinnerOverlay"><div class="spinner"></div></div>
+<div class="modal-overlay" id="modalOverlay">
+<div class="modal">
+<div class="modal-title" id="modalTitle"><i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i><span>Confirmar Acción</span></div>
+<div class="modal-message" id="modalMessage"></div>
+<div class="modal-actions">
+<button class="modal-btn modal-btn-cancel" onclick="cerrarModal()">Cancelar</button>
+<button class="modal-btn modal-btn-confirm" id="modalConfirmBtn" onclick="confirmarModal()">Confirmar</button>
+</div>
+</div>
+</div>
+
+<div id="mainSystem" class="main-system">
+<div class="app-header">
+<img src="logo.png" alt="Logo" class="header-logo" onerror="this.style.display='none'">
+<button onclick="showSection('sucursales')" class="btn-header" id="btn-header-sucursales"><i class="fas fa-building"></i><span>Sucursales</span></button>
+<button onclick="showSection('kata')" class="btn-header" id="btn-header-kata"><i class="fas fa-yin-yang"></i><span>Kata</span></button>
+</div>
+
+<div class="content-area">
+<!-- SECCIÓN SUCURSALES -->
+<section id="sec-sucursales" class="hidden-section">
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+<h2 class="section-title">Registro de Sucursales</h2><span class="section-icon"><i class="fas fa-building"></i></span>
+</div>
+<div class="section-divider"></div>
+<div class="card">
+<form id="formSucursal">
+<label class="form-label">🏢 Nombre de la Sucursal <span class="required">*</span></label>
+<input type="text" id="nombreSucursal" required class="form-input" placeholder="Ej: Sede Central Norte">
+<label class="form-label">Dirección <span class="required">*</span></label>
+<input type="text" id="direccionSucursal" required class="form-input" placeholder="Dirección completa">
+<div style="display: flex; gap: 10px; margin-top: 10px;">
+<button type="submit" class="btn-primary" style="flex: 1;">Registrar Sucursal</button>
+<button type="button" onclick="document.getElementById('formSucursal').reset()" class="btn-secondary">Cancelar edición</button>
+</div>
+</form>
+</div>
+<h2 class="section-title" style="margin-top: 20px;">Sucursales Activas</h2>
+<div class="section-divider"></div>
+<div id="listaSucursales"></div>
+</section>
+
+<!-- SECCIÓN KATA -->
+<section id="sec-kata" class="hidden-section">
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+<h2 class="section-title">Gestión de Exámenes</h2><span class="section-icon"><i class="fas fa-clipboard-list"></i></span>
+</div>
+<div class="section-divider"></div>
+<p style="font-size: 0.85rem; color: #6b7280; margin-bottom: 16px; line-height: 1.5;">Crea exámenes personalizados con nombre, color de cinta asociado y lista de requisitos (ítems) que los alumnos deben cumplir.</p>
+<div class="card" id="cardFormExamen">
+<h3 style="font-size: 1rem; font-weight: 700; color: #1a1a1a; margin-bottom: 14px;" id="tituloFormExamen">📋 Crear Nuevo Examen</h3>
+<label class="form-label">Nombre del Examen <span class="required">*</span></label>
+<input type="text" id="examenNombre" class="form-input" placeholder="Ej: Examen de Cinturón Amarillo">
+<label class="form-label">Color de Cinta Asociado <span class="required">*</span></label>
+<select id="examenCinta" class="form-select">
+<option value="">Seleccione un color...</option>
+<option value="Blanco">⚪ Blanco</option><option value="Amarillo">🟡 Amarillo</option>
+<option value="Verde">🟢 Verde</option><option value="Azul">🔵 Azul</option>
+<option value="Marrón">🟤 Marrón</option><option value="Negro">⚫ Negro</option>
+</select>
+<label class="form-label">Agregar Requisito (Ítem) con Puntaje Máximo</label>
+<div class="add-item-row">
+<input type="text" id="examenItemInput" class="form-input" placeholder="Ej: Técnica de patada" onkeypress="if(event.key==='Enter'){event.preventDefault(); agregarItemExamen();}">
+<input type="number" id="examenItemPeso" class="add-item-peso-input" placeholder="P/Max" min="1" max="100" value="5" title="Puntaje máximo">
+<button onclick="agregarItemExamen()" class="btn-add-item"><i class="fas fa-plus"></i> Agregar</button>
+</div>
+<p style="font-size: 0.7rem; color: #6b7280; margin: -10px 0 10px 0;">💡 El "P/Max" es el puntaje máximo que puede obtener el alumno en este ítem</p>
+<div id="examenItemsContainer" class="items-container"></div>
+<div style="display: flex; gap: 10px; margin-top: 10px;">
+<button onclick="guardarExamen()" class="btn-primary" style="flex: 1;" id="btnGuardarExamen">💾 Guardar Examen</button>
+<button onclick="cancelarExamen()" class="btn-secondary" id="btnCancelarExamen">Cancelar</button>
+</div>
+</div>
+<h2 class="section-title" style="margin-top: 24px;">Exámenes Registrados</h2>
+<div class="section-divider"></div>
+<input type="text" id="searchExamen" class="search-input" placeholder="🔍 Buscar examen..." oninput="renderExamenes()">
+<div id="listaExamenes"></div>
+</section>
+</div>
+
+<div class="bottom-nav">
+<button onclick="window.location.href='sistema.html'" class="nav-item" id="nav-volver"><i class="fas fa-arrow-left"></i><span>Volver</span></button>
+<button onclick="showSection('sucursales')" class="nav-item active" id="nav-sucursales"><i class="fas fa-building"></i><span>Sucursales</span></button>
+<button onclick="showSection('kata')" class="nav-item" id="nav-kata"><i class="fas fa-yin-yang"></i><span>Kata</span></button>
+</div>
+</div>
+
+<script>
+const firebaseConfig = {
+apiKey:"AIzaSyCYLkQFt7y0nszj7IoAGvchbpG19AmJu_s",
+authDomain: "dojo-karate-a5749.firebaseapp.com",
+projectId: "dojo-karate-a5749",
+storageBucket:"dojo-karate-a5749.firebasestorage.app",
+messagingSenderId:"73684673624",
+appId:"1:73684673624:web:5fe169d2d8cb6e4c56d62d"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+let dbLocal = { alumnos: [], sucursales: [], pagos: [], historiales: {}, pasesCinta: [], examenes: [] };
+let itemsExamenActual = [];
+let editingExamenId = null;
+
+function showToast(type, title, message, duration = 4000) {
+const container = document.getElementById('toastContainer');
+while (container.children.length >= 3) container.removeChild(container.firstChild);
+const toast = document.createElement('div');
+toast.className = `toast ${type}`;
+const icons = { success: 'fa-check-circle', error: 'fa-times-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle' };
+toast.innerHTML = `<i class="fas ${icons[type]} toast-icon"></i><div class="toast-content"><div class="toast-title">${title}</div><div class="toast-message">${message}</div></div><button class="toast-close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>`;
+container.appendChild(toast);
+setTimeout(() => {
+if (toast.parentElement) {
+toast.style.animation = 'slideOutRight 0.3s ease-out forwards';
+setTimeout(() => { if (toast.parentElement) toast.parentElement.removeChild(toast); }, 300);
+}
+}, duration);
+}
+
+function mostrarSpinner() { document.getElementById('spinnerOverlay').classList.add('active'); }
+function ocultarSpinner() { document.getElementById('spinnerOverlay').classList.remove('active'); }
+let modalCallback = null;
+function mostrarModal(title, message, callback) {
+document.getElementById('modalTitle').innerHTML = `<i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i><span>${title}</span>`;
+document.getElementById('modalMessage').textContent = message;
+modalCallback = callback;
+document.getElementById('modalOverlay').classList.add('active');
+}
+function cerrarModal() { document.getElementById('modalOverlay').classList.remove('active'); modalCallback = null; }
+function confirmarModal() {
+const callback = modalCallback; cerrarModal(); if (callback) callback();
+}
+
+async function cargarDatos() {
+try {
+const sucursalesSnap = await db.collection('sucursales').get();
+dbLocal.sucursales = sucursalesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+const examenesSnap = await db.collection('examenes').get();
+dbLocal.examenes = examenesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+renderSucursales();
+renderExamenes();
+showToast('success', 'Datos Cargados', 'Conexión exitosa con Firebase');
+} catch (error) {
+console.error('Error cargando datos:', error);
+showToast('error', 'Error de Conexión', 'No se pudieron cargar los datos');
+}
+}
+
+function showSection(id) {
+document.querySelectorAll('.main-system section').forEach(sec => sec.classList.add('hidden-section'));
+document.getElementById('sec-' + id).classList.remove('hidden-section');
+document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+const navBtn = document.getElementById('nav-' + id);
+if (navBtn) navBtn.classList.add('active');
+document.querySelectorAll('.btn-header').forEach(b => b.classList.remove('active'));
+const headerBtn = document.getElementById('btn-header-' + id);
+if (headerBtn) headerBtn.classList.add('active');
+
+if (id === 'kata') renderExamenes();
+if (id === 'sucursales') renderSucursales();
+}
+
+document.getElementById('formSucursal').addEventListener('submit', async (e) => {
+e.preventDefault();
+mostrarSpinner();
+try {
+const sucursalData = { nombre: document.getElementById('nombreSucursal').value, direccion: document.getElementById('direccionSucursal').value, fechaCreacion: new Date().toISOString() };
+const docRef = await db.collection('sucursales').add(sucursalData);
+dbLocal.sucursales.push({ id: docRef.id, ...sucursalData });
+renderSucursales();
+e.target.reset();
+showToast('success', 'Sucursal Registrada', 'La sucursal ha sido registrada en la nube');
+} catch (error) { showToast('error', 'Error', 'No se pudo registrar la sucursal'); }
+ocultarSpinner();
+});
+
+function renderSucursales() {
+const lista = document.getElementById('listaSucursales');
+if (dbLocal.sucursales.length === 0) { lista.innerHTML = '<p style="text-align: center; color: #9ca3af; padding: 20px;">No hay sucursales registradas</p>'; return; }
+lista.innerHTML = dbLocal.sucursales.map(s => `<div class="sucursal-card"><div class="sucursal-name">${s.nombre}</div><div class="sucursal-address">📍 ${s.direccion}</div><div class="sucursal-actions"><button onclick="editarSucursal('${s.id}')" class="btn-secondary">Editar</button><button onclick="eliminarSucursal('${s.id}')" class="btn-danger">Borrar</button></div></div>`).join('');
+}
+
+function editarSucursal(id) {
+const s = dbLocal.sucursales.find(su => su.id === id);
+if (!s) return;
+document.getElementById('nombreSucursal').value = s.nombre;
+document.getElementById('direccionSucursal').value = s.direccion;
+eliminarSucursal(id, true);
+window.scrollTo({ top: 0, behavior: 'smooth' });
+showToast('info', 'Modo Edición', `Editando sucursal: ${s.nombre}`);
+}
+
+async function eliminarSucursal(id, silent) {
+if (!silent) {
+const sucursal = dbLocal.sucursales.find(s => s.id === id);
+mostrarModal('Eliminar Sucursal', `¿Estás seguro que deseas eliminar ${sucursal.nombre}?`, async () => {
+mostrarSpinner();
+try {
+await db.collection('sucursales').doc(id).delete();
+dbLocal.sucursales = dbLocal.sucursales.filter(s => s.id !== id);
+renderSucursales();
+showToast('success', 'Sucursal Eliminada', 'La sucursal ha sido eliminada');
+} catch (error) { showToast('error', 'Error', 'No se pudo eliminar la sucursal'); }
+ocultarSpinner();
+});
+} else { dbLocal.sucursales = dbLocal.sucursales.filter(s => s.id !== id); }
+}
+
+function agregarItemExamen() {
+const input = document.getElementById('examenItemInput');
+const pesoInput = document.getElementById('examenItemPeso');
+const item = input.value.trim();
+const peso = parseInt(pesoInput.value) || 5;
+if (!item) return showToast('warning', 'Requisito Vacío', 'Escribe un requisito');
+if (peso < 1) return showToast('warning', 'Peso Inválido', 'El puntaje máximo debe ser al menos 1');
+itemsExamenActual.push({ texto: item, peso: peso });
+input.value = ''; pesoInput.value = '5'; renderItemsExamen(); input.focus();
+showToast('success', 'Requisito Agregado', `"${item}" agregado con P/Max ${peso}`);
+}
+function eliminarItemExamen(index) { itemsExamenActual.splice(index, 1); renderItemsExamen(); showToast('info', 'Requisito Eliminado', 'El requisito ha sido eliminado'); }
+function renderItemsExamen() {
+const container = document.getElementById('examenItemsContainer');
+if (itemsExamenActual.length === 0) { container.innerHTML = '<p style="font-size: 0.8rem; color: #9ca3af; text-align: center; padding: 10px;">Aún no hay requisitos agregados</p>'; return; }
+container.innerHTML = itemsExamenActual.map((item, index) => `<div class="examen-item"><span class="examen-item-numero">${index + 1}</span><span class="examen-item-texto">${item.texto || item}</span><span class="examen-item-peso">P/Max: ${item.peso || 5}</span><button onclick="eliminarItemExamen(${index})" class="examen-item-eliminar" title="Eliminar"><i class="fas fa-times-circle"></i></button></div>`).join('');
+}
+
+async function guardarExamen() {
+const nombre = document.getElementById('examenNombre').value.trim();
+const cinta = document.getElementById('examenCinta').value;
+if (!nombre) return showToast('error', 'Nombre Vacío', 'Escribe el nombre del examen');
+if (!cinta) return showToast('error', 'Cinta No Seleccionada', 'Selecciona un color de cinta');
+if (itemsExamenActual.length === 0) return showToast('error', 'Sin Requisitos', 'Agrega al menos un requisito');
+mostrarSpinner();
+const examenData = { nombre: nombre, cinta: cinta, items: [...itemsExamenActual], fechaCreacion: new Date().toLocaleDateString() };
+try {
+if (editingExamenId) {
+await db.collection('examenes').doc(editingExamenId).set({ ...examenData, fechaModificacion: new Date().toLocaleDateString() });
+const idx = dbLocal.examenes.findIndex(e => e.id === editingExamenId);
+if (idx !== -1) { dbLocal.examenes[idx] = { id: editingExamenId, ...examenData, fechaModificacion: new Date().toLocaleDateString() }; }
+editingExamenId = null;
+document.getElementById('tituloFormExamen').textContent = '📋 Crear Nuevo Examen';
+document.getElementById('btnGuardarExamen').innerHTML = '💾 Guardar Examen';
+showToast('success', 'Examen Actualizado', 'El examen ha sido actualizado en la nube');
+} else {
+const docRef = await db.collection('examenes').add(examenData);
+dbLocal.examenes.push({ id: docRef.id, ...examenData });
+showToast('success', 'Examen Guardado', 'El examen ha sido guardado en la nube');
+}
+cancelarExamen(); renderExamenes();
+} catch (error) { showToast('error', 'Error', 'No se pudo guardar el examen'); }
+ocultarSpinner();
+}
+
+function editarExamen(id) {
+const examen = dbLocal.examenes.find(e => e.id === id);
+if (!examen) return;
+editingExamenId = id;
+document.getElementById('examenNombre').value = examen.nombre;
+document.getElementById('examenCinta').value = examen.cinta;
+itemsExamenActual = [...examen.items];
+renderItemsExamen();
+document.getElementById('tituloFormExamen').textContent = '✏️ Editando Examen: ' + examen.nombre;
+document.getElementById('btnGuardarExamen').innerHTML = '💾 Actualizar Examen';
+document.getElementById('cardFormExamen').scrollIntoView({ behavior: 'smooth', block: 'start' });
+showToast('info', 'Modo Edición', `Editando examen: ${examen.nombre}`);
+}
+
+function cancelarExamen() {
+document.getElementById('examenNombre').value = '';
+document.getElementById('examenCinta').value = '';
+document.getElementById('examenItemInput').value = '';
+document.getElementById('examenItemPeso').value = '5';
+itemsExamenActual = [];
+editingExamenId = null;
+document.getElementById('tituloFormExamen').textContent = '📋 Crear Nuevo Examen';
+document.getElementById('btnGuardarExamen').innerHTML = '💾 Guardar Examen';
+renderItemsExamen();
+}
+
+async function eliminarExamen(id) {
+const examen = dbLocal.examenes.find(e => e.id === id);
+mostrarModal('Eliminar Examen', `¿Estás seguro que deseas eliminar "${examen.nombre}"?`, async () => {
+mostrarSpinner();
+try {
+await db.collection('examenes').doc(id).delete();
+dbLocal.examenes = dbLocal.examenes.filter(e => e.id !== id);
+renderExamenes();
+showToast('success', 'Examen Eliminado', 'El examen ha sido eliminado');
+} catch (error) { showToast('error', 'Error', 'No se pudo eliminar el examen'); }
+ocultarSpinner();
+});
+}
+
+function renderExamenes() {
+const container = document.getElementById('listaExamenes');
+if (!container) return;
+const search = (document.getElementById('searchExamen')?.value || '').toLowerCase();
+const examenesFiltrados = dbLocal.examenes.filter(e => e.nombre.toLowerCase().includes(search) || e.cinta.toLowerCase().includes(search)).reverse();
+if (examenesFiltrados.length === 0) { container.innerHTML = '<p style="text-align: center; color: #9ca3af; padding: 20px;">No hay exámenes registrados</p>'; return; }
+const iconosCinta = { 'Blanco': '⚪', 'Amarillo': '🟡', 'Verde': '🟢', 'Azul': '🔵', 'Marrón': '🟤', 'Negro': '⚫' };
+const claseCinta = { 'Blanco': 'cinta-blanco', 'Amarillo': 'cinta-amarillo', 'Verde': 'cinta-verde', 'Azul': 'cinta-azul', 'Marrón': 'cinta-marron', 'Negro': 'cinta-negro' };
+const claseBorde = { 'Blanco': 'border-blanco', 'Amarillo': 'border-amarillo', 'Verde': 'border-verde', 'Azul': 'border-azul', 'Marrón': 'border-marron', 'Negro': 'border-negro' };
+container.innerHTML = examenesFiltrados.map(e => {
+const totalPeso = e.items.reduce((sum, item) => sum + (item.peso || 5), 0);
+return `<div class="examen-card ${claseBorde[e.cinta] || ''}"><div class="examen-header"><div class="examen-nombre">${e.nombre}</div><div style="display: flex; gap: 6px;"><button onclick="editarExamen('${e.id}')" class="btn-edit"><i class="fas fa-edit"></i> Editar</button><button onclick="eliminarExamen('${e.id}')" class="btn-danger" style="padding: 6px 14px; font-size: 0.75rem;">Eliminar</button></div></div><div class="examen-cinta ${claseCinta[e.cinta] || ''}">${iconosCinta[e.cinta] || ''} Cinta ${e.cinta}</div><div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 8px;">📅 Creado: ${e.fechaCreacion}${e.fechaModificacion ? ' | ✏️ Modificado: ' + e.fechaModificacion : ''} | 📋 ${e.items.length} requisitos | 🎯 Puntaje máx: ${totalPeso}</div><ul class="examen-items">${e.items.map((item, index) => `<li class="examen-item"><span class="examen-item-numero">${index + 1}</span><span class="examen-item-texto">${item.texto || item}</span><span class="examen-item-peso">P/Max: ${item.peso || 5}</span></li>`).join('')}</ul></div>`;
+}).join('');
+}
+
+window.addEventListener('load', () => {
+cargarDatos();
+showSection('sucursales');
+});
+</script>
+</body>
+</html>
