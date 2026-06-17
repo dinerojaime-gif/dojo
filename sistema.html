@@ -447,6 +447,39 @@ body { font-family: 'Roboto', sans-serif; background: #f5f5f5; }
 </div>
 
 <script>
+// === CONTROL DE ACCESO POR ROL ===
+const rolUsuario = localStorage.getItem('rol');
+const nombreUsuario = localStorage.getItem('usuario');
+
+// Si no hay sesión, redirigir al login
+if (!rolUsuario) {
+  window.location.href = 'index.html';
+}
+
+// Si es invitado, aplicar restricciones
+if (rolUsuario === 'invitado') {
+  // Ocultar botones del header que no son "Pase Cinta"
+  document.querySelectorAll('.btn-header').forEach(btn => {
+    if (btn.id !== 'btn-header-pase-cinta') {
+      btn.style.display = 'none';
+    }
+  });
+  
+  // Ocultar items de navegación que no son "Pase Cinta" ni "Salir"
+  document.querySelectorAll('.nav-item').forEach(nav => {
+    if (nav.id !== 'nav-salir') {
+      nav.style.display = 'none';
+    }
+  });
+  
+  // Ocultar secciones que no son "Pase Cinta"
+  const seccionesRestringidas = ['sec-inscripcion', 'sec-listado-alumnos', 'sec-listado-sensei', 'sec-kata', 'sec-sucursales', 'sec-backup'];
+  seccionesRestringidas.forEach(id => {
+    const sec = document.getElementById(id);
+    if (sec) sec.style.display = 'none';
+  });
+}
+
 const firebaseConfig = {
 apiKey:"AIzaSyCYLkQFt7y0nszj7IoAGvchbpG19AmJu_s",
 authDomain: "dojo-karate-a5749.firebaseapp.com",
@@ -554,6 +587,11 @@ actualizarProgresoCarga(100, '¡Sistema listo!');
 await new Promise(resolve => setTimeout(resolve, 500));
 showToast('success', 'Conexión Exitosa', 'Datos sincronizados con Firebase');
 ocultarPantallaCarga();
+
+// Si es invitado, redirigir automáticamente a Pase Cinta
+if (rolUsuario === 'invitado') {
+  showSection('pase-cinta');
+}
 } catch (error) {
 console.error('Error cargando datos:', error);
 actualizarProgresoCarga(100, 'Error de conexión');
@@ -591,10 +629,21 @@ return true;
 }
 
 function exitSystem() {
-mostrarModal('Salir del Sistema', '¿Estás seguro que deseas salir del sistema?', () => { window.location.href = 'index.html'; });
+mostrarModal('Salir del Sistema', '¿Estás seguro que deseas salir del sistema?', () => { 
+  // Limpiar sesión
+  localStorage.removeItem('usuario');
+  localStorage.removeItem('rol');
+  window.location.href = 'index.html'; 
+});
 }
 
 function showSection(id) {
+// Validar permisos si es invitado
+if (rolUsuario === 'invitado' && id !== 'pase-cinta') {
+  showToast('warning', 'Acceso Restringido', 'Solo tienes acceso a Pase de Cinta');
+  return;
+}
+
 document.querySelectorAll('.main-system section').forEach(sec => sec.classList.add('hidden-section'));
 document.getElementById('sec-' + id).classList.remove('hidden-section');
 document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
