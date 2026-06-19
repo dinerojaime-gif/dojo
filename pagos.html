@@ -9,6 +9,8 @@
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<!-- 🔥 CARGAR CONFIGURACIÓN FIREBASE DESDE ARCHIVO EXTERNO -->
+<script src="firebase-loader.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=Roboto:wght@300;400;500;700&display=swap');
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -92,13 +94,10 @@ body { font-family: 'Roboto', sans-serif; background: #f5f5f5; }
 </head>
 <body>
 <div class="loading-screen" id="loadingScreen">
-<img src="logo.png" alt="Logo" class="loading-logo" onerror="this.style.display='none'">
-<div class="loading-title">SHITO-RYU</div>
-<div class="loading-subtitle">KENWAMABUNI</div>
-<div class="loading-spinner"></div>
-<div class="loading-progress"><div class="loading-progress-bar" id="loadingProgressBar"></div></div>
-<div class="loading-counter" id="loadingCounter">0%</div>
-<div class="loading-text">Conectando con la base de datos...</div>
+    <div class="loading-spinner"></div>
+    <div class="loading-progress" style="width: 200px; margin-bottom: 25px;"><div class="loading-progress-bar" id="loadingProgressBar"></div></div>
+    <div class="loading-counter" id="loadingCounter" style="font-size: 3rem; margin-bottom: 15px;">0%</div>
+    <div class="loading-text" id="loadingText" style="font-size: 0.9rem; letter-spacing: 0.25em;">CARGANDO HISTORIALES...</div>
 </div>
 <div class="toast-container" id="toastContainer"></div>
 <div class="spinner-overlay" id="spinnerOverlay"><div class="spinner"></div></div>
@@ -115,7 +114,6 @@ body { font-family: 'Roboto', sans-serif; background: #f5f5f5; }
 <div id="mainSystem" class="main-system">
 <div class="app-header">
 <img src="logo.png" alt="Logo" class="header-logo" onerror="this.style.display='none'">
-<button class="btn-salir" onclick="exitSystem()"><i class="fas fa-sign-out-alt"></i> <span>Salir</span></button>
 </div>
 <div class="content-area">
 
@@ -195,14 +193,6 @@ body { font-family: 'Roboto', sans-serif; background: #f5f5f5; }
 </select>
 
 <button type="submit" class="btn-primary">Registrar Pago</button>
-<div style="display: flex; gap: 10px; margin-top: 12px;">
-<button type="button" onclick="mostrarCobranza()" class="btn-secondary" style="flex: 1;">
-<i class="fas fa-user-clock"></i> Cobranza
-</button>
-<button type="button" onclick="mostrarHistorial()" class="btn-secondary" style="flex: 1; background: #3b82f6;">
-<i class="fas fa-history"></i> Historial
-</button>
-</div>
 </form>
 </div>
 </section>
@@ -242,6 +232,11 @@ body { font-family: 'Roboto', sans-serif; background: #f5f5f5; }
 <h2 class="section-title">Historial de Pagos</h2><span class="section-icon"><i class="fas fa-history"></i></span>
 </div>
 <div class="section-divider"></div>
+<div class="card">
+<label class="form-label">👤 Seleccionar Alumno</label>
+<select id="selectAlumnoHistorial" class="form-select" onchange="renderPagos()">
+</select>
+</div>
 <div id="listaPagos"></div>
 </section>
 </div>
@@ -250,38 +245,28 @@ body { font-family: 'Roboto', sans-serif; background: #f5f5f5; }
 <button onclick="showSection('pagos')" class="nav-item active"><i class="fas fa-coins"></i><span>Pagos</span></button>
 <button onclick="showSection('cobranza')" class="nav-item"><i class="fas fa-user-clock"></i><span>Cobranza</span></button>
 <button onclick="showSection('historial')" class="nav-item"><i class="fas fa-history"></i><span>Historial</span></button>
+<button onclick="exitSystem()" class="nav-item"><i class="fas fa-arrow-left"></i><span>Volver</span></button>
 </div>
 </div>
 <script>
-const firebaseConfig = {
-apiKey:"AIzaSyCYLkQFt7y0nszj7IoAGvchbpG19AmJu_s",
-authDomain: "dojo-karate-a5749.firebaseapp.com",
-projectId: "dojo-karate-a5749",
-storageBucket:"dojo-karate-a5749.firebasestorage.app",
-messagingSenderId:"73684673624",
-appId:"1:73684673624:web:5fe169d2d8cb6e4c56d62d"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+// ============================================
+// CONEXIÓN DIRECTA A FIREBASE (sin archivo externo)
+// ============================================
+let db = (typeof window.db !== 'undefined') ? window.db : null;
 
-let dbLocal = { alumnos: [], pagos: [] };
-
-function actualizarProgresoCarga(porcentaje, texto) {
-const progressBar = document.getElementById('loadingProgressBar');
-const counter = document.getElementById('loadingCounter');
-const loadingText = document.querySelector('.loading-text');
-if (progressBar) progressBar.style.width = porcentaje + '%';
-if (counter) counter.textContent = Math.round(porcentaje) + '%';
-if (loadingText && texto) loadingText.textContent = texto;
+// Función auxiliar para actualizar el progreso de carga
+function actualizarProgresoCarga(progreso, texto) {
+    document.getElementById('loadingProgressBar').style.width = progreso + '%';
+    document.getElementById('loadingCounter').textContent = progreso + '%';
+    document.getElementById('loadingText').textContent = texto;
 }
 
 function ocultarPantallaCarga() {
-const loadingScreen = document.getElementById('loadingScreen');
-if (loadingScreen) {
-loadingScreen.classList.add('hidden');
-setTimeout(() => { loadingScreen.style.display = 'none'; }, 500);
+    document.getElementById('loadingScreen').classList.add('hidden');
 }
-}
+
+// Datos locales como respaldo
+let dbLocal = { alumnos: [], pagos: [] };
 
 function showToast(type, title, message, duration = 4000) {
 const container = document.getElementById('toastContainer');
@@ -416,36 +401,69 @@ onmouseout="this.style.background='#25D366'">
 `).join('');
 }
 
+// ============================================
+// FUNCIÓN PRINCIPAL DE CARGA
+// ============================================
 async function cargarDatos() {
 try {
-actualizarProgresoCarga(10, 'Conectando con Firebase...');
+actualizarProgresoCarga(10, 'VERIFICANDO CONEXIÓN...');
 await new Promise(resolve => setTimeout(resolve, 300));
-actualizarProgresoCarga(30, 'Cargando alumnos...');
+
+console.log('🔍 === DIAGNÓSTICO DE CONEXIÓN ===');
+console.log('1. ¿Existe firebase?', typeof firebase !== 'undefined');
+console.log('2. ¿Existe window.db?', typeof window.db !== 'undefined');
+console.log('3. Valor de db:', db);
+
+if (typeof firebase === 'undefined') {
+    throw new Error('Firebase SDK no está cargado. Verifica los scripts del SDK.');
+}
+
+// Usar directamente window.db ya inicializado en el head
+db = window.db;
+
+if (!db) {
+    throw new Error('La base de datos no se inicializó correctamente. Verifica las credenciales de Firebase.');
+}
+
+actualizarProgresoCarga(30, 'CARGANDO ALUMNOS...');
 const alumnosSnap = await db.collection('alumnos').get();
 dbLocal.alumnos = alumnosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-actualizarProgresoCarga(60, 'Cargando pagos...');
+console.log(`✅ ${dbLocal.alumnos.length} alumnos cargados`);
+
+actualizarProgresoCarga(60, 'CARGANDO PAGOS...');
 const pagosSnap = await db.collection('pagos').get();
 dbLocal.pagos = pagosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-actualizarProgresoCarga(90, 'Finalizando...');
+console.log(`✅ ${dbLocal.pagos.length} pagos cargados`);
+
+actualizarProgresoCarga(90, 'FINALIZANDO...');
 await new Promise(resolve => setTimeout(resolve, 300));
-actualizarSelects();
-cargarSucursales();
-actualizarProgresoCarga(100, '¡Sistema listo!');
+actualizarProgresoCarga(100, '¡LISTO!');
 await new Promise(resolve => setTimeout(resolve, 500));
 showToast('success', 'Conexión Exitosa', 'Datos sincronizados con Firebase');
 ocultarPantallaCarga();
+actualizarSelects();
+cargarSucursales();
 renderDashboard();
 } catch (error) {
-console.error('Error cargando datos:', error);
-actualizarProgresoCarga(100, 'Error de conexión');
+console.error('❌ Error cargando datos:', error);
+actualizarProgresoCarga(100, 'ERROR');
 await new Promise(resolve => setTimeout(resolve, 1000));
 ocultarPantallaCarga();
-showToast('error', 'Error de Conexión', 'No se pudieron cargar los datos de Firebase.');
+
+const mensajeError = `
+<strong>Diagnóstico:</strong><br>
+• ${error.message}<br>
+<strong>Posibles causas:</strong><br>
+• Las credenciales de Firebase son incorrectas<br>
+• Las reglas de Firestore bloquean la lectura<br>
+• No hay conexión a internet
+`;
+showToast('error', 'Error de Conexión', mensajeError, 8000);
 }
 }
 
 function exitSystem() {
-mostrarModal('Salir del Sistema', '¿Estás seguro que deseas salir del sistema?', () => { window.location.href = 'index.html'; });
+    mostrarModal('Volver', '¿Estás seguro que deseas volver al sistema?', () => { window.location.href = 'sistema.html'; });
 }
 
 function showSection(id) {
@@ -469,12 +487,17 @@ if (id === 'historial') renderPagos();
 function actualizarSelects() {
 const optsAlum = dbLocal.alumnos.filter(a => a.tipoInscripcion !== 'Sensei').map(a => `<option value="${a.id}">${a.nombre} (${a.cinturon})</option>`).join('');
 document.getElementById('selectAlumnoPago').innerHTML = '<option value="">Seleccione un alumno...</option>' + optsAlum;
+document.getElementById('selectAlumnoHistorial').innerHTML = '<option value="">Seleccione un alumno...</option>' + optsAlum;
 const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 document.getElementById('mesPago').value = meses[new Date().getMonth()];
 }
 
 document.getElementById('formPago').addEventListener('submit', async (e) => {
 e.preventDefault();
+if (!db) {
+    showToast('error', 'Sin Conexión', 'No hay conexión a la base de datos');
+    return;
+}
 mostrarSpinner();
 try {
 const alumnoId = document.getElementById('selectAlumnoPago').value;
@@ -495,27 +518,79 @@ const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', '
 document.getElementById('mesPago').value = meses[new Date().getMonth()];
 showToast('success', 'Pago Registrado', `Pago de $${pagoData.monto} registrado para ${pagoData.mes}`);
 } catch (error) {
-showToast('error', 'Error', 'No se pudo registrar el pago');
+console.error('Error registrando pago:', error);
+showToast('error', 'Error', 'No se pudo registrar el pago: ' + error.message);
 }
 ocultarSpinner();
 });
 
 function renderPagos() {
-const lista = document.getElementById('listaPagos');
-if (dbLocal.pagos.length === 0) { lista.innerHTML = '<p style="text-align: center; color: #9ca3af; padding: 20px;">No hay pagos registrados</p>'; return; }
-lista.innerHTML = dbLocal.pagos.slice().reverse().map(p => `
-<div class="pago-card">
-<div class="pago-name">${p.alumnoNombre}</div>
-<div class="pago-detail">Monto: $${p.monto.toFixed(2)} USD</div>
-<div class="pago-detail">Concepto: ${p.concepto}</div>
-<div class="pago-detail">Mes: ${p.mes || 'N/A'}</div>
-<div class="pago-detail">Fecha: ${p.fecha}</div>
-<button onclick="eliminarPago('${p.id}')" class="btn-danger" style="margin-top: 8px; padding: 6px 14px; font-size: 0.8rem;">Eliminar</button>
-</div>
-`).join('');
+    const lista = document.getElementById('listaPagos');
+    const alumnoSeleccionado = document.getElementById('selectAlumnoHistorial').value;
+    
+    if (!alumnoSeleccionado) { 
+        lista.innerHTML = '<p style="text-align: center; color: #9ca3af; padding: 20px;">Seleccione un alumno para ver su historial de pagos</p>'; 
+        return; 
+    }
+    
+    let pagosFiltrados = dbLocal.pagos.filter(p => p.alumnoId === alumnoSeleccionado);
+    
+    if (pagosFiltrados.length === 0) { 
+        lista.innerHTML = '<p style="text-align: center; color: #9ca3af; padding: 20px;">No hay pagos registrados para este alumno</p>'; 
+        return; 
+    }
+    
+    const pagosPorAlumno = {};
+    pagosFiltrados.forEach(pago => {
+        if (!pagosPorAlumno[pago.alumnoNombre]) {
+            pagosPorAlumno[pago.alumnoNombre] = [];
+        }
+        pagosPorAlumno[pago.alumnoNombre].push(pago);
+    });
+    
+    const alumnosOrdenados = Object.keys(pagosPorAlumno).sort();
+    
+    lista.innerHTML = alumnosOrdenados.map(nombreAlumno => {
+        const pagos = pagosPorAlumno[nombreAlumno];
+        const totalPagos = pagos.reduce((sum, p) => sum + p.monto, 0);
+        
+        const pagosHTML = pagos.map(p => `
+            <div style="border-bottom: 1px solid #e5e7eb; padding: 8px 0; ${p === pagos[pagos.length - 1] ? 'border-bottom: none;' : ''}">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                    <div style="flex: 1;">
+                        <div style="font-size: 0.85rem; color: #6b7280;">
+                            <span style="font-weight: 600;">Fecha:</span> ${p.fecha} 
+                            <span style="font-weight: 600; margin-left: 12px;">Mes:</span> ${p.mes || 'N/A'}
+                        </div>
+                        <div style="font-size: 0.85rem; color: #6b7280;">
+                            <span style="font-weight: 600;">Monto:</span> $${p.monto.toFixed(2)} USD 
+                            <span style="font-weight: 600; margin-left: 12px;">Concepto:</span> ${p.concepto}
+                        </div>
+                    </div>
+                    <button onclick="eliminarPago('${p.id}')" class="btn-danger" style="padding: 6px 14px; font-size: 0.8rem;">Eliminar</button>
+                </div>
+            </div>
+        `).join('');
+        
+        return `
+            <div class="pago-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <div class="pago-name">${nombreAlumno}</div>
+                    <div style="background: #fee2e2; padding: 4px 12px; border-radius: 12px; font-size: 0.85rem; font-weight: 700; color: #dc2626;">
+                        Total: $${totalPagos.toFixed(2)}
+                    </div>
+                </div>
+                ${pagosHTML}
+            </div>
+        `;
+    }).join('');
 }
 
 async function eliminarPago(id) {
+if (!db) {
+    showToast('error', 'Sin Conexión', 'No hay conexión a la base de datos');
+    return;
+}
 mostrarModal('Eliminar Pago', '¿Estás seguro que deseas eliminar este pago?', async () => {
 mostrarSpinner();
 try {
@@ -524,6 +599,7 @@ dbLocal.pagos = dbLocal.pagos.filter(p => p.id !== id);
 renderPagos();
 showToast('success', 'Pago Eliminado', 'El pago ha sido eliminado');
 } catch (error) {
+console.error('Error eliminando pago:', error);
 showToast('error', 'Error', 'No se pudo eliminar el pago');
 }
 ocultarSpinner();

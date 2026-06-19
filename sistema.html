@@ -169,13 +169,13 @@ body { font-family: 'Roboto', sans-serif; background: #f5f5f5; }
 </head>
 <body>
 <div class="loading-screen" id="loadingScreen">
-<img src="logo.png" alt="Logo" class="loading-logo" onerror="this.style.display='none'">
-<div class="loading-title">SHITO-RYU</div>
-<div class="loading-subtitle">KENWAMABUNI</div>
-<div class="loading-spinner"></div>
-<div class="loading-progress"><div class="loading-progress-bar" id="loadingProgressBar"></div></div>
-<div class="loading-counter" id="loadingCounter">0%</div>
-<div class="loading-text">Conectando con la base de datos...</div>
+  <img src="logo.png" alt="Logo" class="loading-logo" onerror="this.style.display='none'">
+  <div class="loading-spinner"></div>
+  <div class="loading-progress">
+    <div class="loading-progress-bar" id="loadingProgressBar"></div>
+  </div>
+  <div class="loading-counter" id="loadingCounter">0%</div>
+  <div class="loading-text" id="loadingText">CARGANDO HISTORIALES...</div>
 </div>
 
 <div class="toast-container" id="toastContainer"></div>
@@ -500,7 +500,7 @@ let editingExamenId = null;
 function actualizarProgresoCarga(porcentaje, texto) {
 const progressBar = document.getElementById('loadingProgressBar');
 const counter = document.getElementById('loadingCounter');
-const loadingText = document.querySelector('.loading-text');
+const loadingText = document.getElementById('loadingText');
 if (progressBar) progressBar.style.width = porcentaje + '%';
 if (counter) counter.textContent = Math.round(porcentaje) + '%';
 if (loadingText && texto) loadingText.textContent = texto;
@@ -555,34 +555,34 @@ const callback = modalCallback; cerrarModal(); if (callback) callback();
 
 async function cargarDatos() {
 try {
-actualizarProgresoCarga(10, 'Conectando con Firebase...');
+actualizarProgresoCarga(10, 'CONECTANDO CON FIREBASE...');
 await new Promise(resolve => setTimeout(resolve, 300));
-actualizarProgresoCarga(20, 'Cargando alumnos...');
+actualizarProgresoCarga(20, 'CARGANDO ALUMNOS...');
 const alumnosSnap = await db.collection('alumnos').get();
 dbLocal.alumnos = alumnosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-actualizarProgresoCarga(35, 'Cargando sucursales...');
+actualizarProgresoCarga(35, 'CARGANDO SUCURSALES...');
 const sucursalesSnap = await db.collection('sucursales').get();
 dbLocal.sucursales = sucursalesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-actualizarProgresoCarga(50, 'Cargando pagos...');
+actualizarProgresoCarga(50, 'CARGANDO PAGOS...');
 const pagosSnap = await db.collection('pagos').get();
 dbLocal.pagos = pagosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-actualizarProgresoCarga(65, 'Cargando pases de cinta...');
+actualizarProgresoCarga(65, 'CARGANDO PASES DE CINTA...');
 const pasesSnap = await db.collection('pasesCinta').get();
 dbLocal.pasesCinta = pasesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-actualizarProgresoCarga(75, 'Cargando exámenes...');
+actualizarProgresoCarga(75, 'CARGANDO EXÁMENES...');
 const examenesSnap = await db.collection('examenes').get();
 dbLocal.examenes = examenesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-actualizarProgresoCarga(85, 'Cargando historiales...');
+actualizarProgresoCarga(85, 'CARGANDO HISTORIALES...');
 for (const alumno of dbLocal.alumnos) {
 const histSnap = await db.collection('alumnos').doc(alumno.id).collection('historial').get();
 dbLocal.historiales[alumno.id] = histSnap.docs.map(doc => doc.data());
 }
-actualizarProgresoCarga(95, 'Finalizando...');
+actualizarProgresoCarga(95, 'FINALIZANDO...');
 await new Promise(resolve => setTimeout(resolve, 300));
 actualizarSelects();
 actualizarSelectEvaluadores();
 actualizarSelectCinturasAspira();
-actualizarProgresoCarga(100, '¡Sistema listo!');
+actualizarProgresoCarga(100, '¡SISTEMA LISTO!');
 await new Promise(resolve => setTimeout(resolve, 500));
 showToast('success', 'Conexión Exitosa', 'Datos sincronizados con Firebase');
 ocultarPantallaCarga();
@@ -593,7 +593,7 @@ if (rolUsuario === 'invitado') {
 }
 } catch (error) {
 console.error('Error cargando datos:', error);
-actualizarProgresoCarga(100, 'Error de conexión');
+actualizarProgresoCarga(100, 'ERROR DE CONEXIÓN');
 await new Promise(resolve => setTimeout(resolve, 1000));
 ocultarPantallaCarga();
 showToast('error', 'Error de Conexión', 'No se pudieron cargar los datos de Firebase.');
@@ -946,7 +946,7 @@ const coloresBg = {
 'Marrón': 'background: #fed7aa; color: #9a3412; border: 1px solid #fdba74;',
 'Negro': 'background: #1a1a1a; color: #ffffff; border: 1px solid #374151;'
 };
-displayActual.innerHTML = `<span style="${coloresBg[alumno.cinturon] || ''} padding: 4px 12px; border-radius: 12px; font-weight: 600;">${iconos[alumno.cinturon] || ''} ${alumno.cinturon}</span>`;
+displayActual.innerHTML = `<span style="${coloresBg[alumno.cinturon] || ''} padding: 4px 12px; border-radius:12px; font-weight: 600;">${iconos[alumno.cinturon] || ''} ${alumno.cinturon}</span>`;
 }
 
 function mostrarExamenCorrespondiente() {
