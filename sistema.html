@@ -230,16 +230,12 @@ body { font-family: 'Roboto', sans-serif; background: #f5f5f5; }
 <label class="form-label">Nombre del Representante (Si es menor)</label>
 <input type="text" id="representante" class="form-input" placeholder="Nombre del representante">
 <label class="form-label">Sucursal <span class="required">*</span></label>
-<select id="sucursalAlumno" required class="form-select"><option value="">Seleccione una sucursal...</option></select>
+<select id="sucursalAlumno" required class="form-select"><option value="">Cargando sucursales...</option></select>
 <label class="form-label">Teléfono (WhatsApp ej: 584120000000) <span class="required">*</span></label>
 <input type="tel" id="telefono" required pattern="[0-9]{10,}" class="form-input" placeholder="Solo números, mín. 10 dígitos" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
 <p style="font-size: 0.7rem; color: #dc2626; margin: -10px 0 10px 0;">⚠️ Solo números, mínimo 10 dígitos</p>
 <label class="form-label">Cinturón <span class="required">*</span></label>
-<select id="cinturon" required class="form-select">
-<option value="Blanco">⚪ Blanco</option><option value="Amarillo">🟡 Amarillo</option>
-<option value="Verde">🟢 Verde</option><option value="Azul">🔵 Azul</option>
-<option value="Marrón">🟤 Marrón</option><option value="Negro">⚫ Negro</option>
-</select>
+<select id="cinturon" required class="form-select"><option value="">Cargando cinturones...</option></select>
 <label class="form-label">Observaciones</label>
 <textarea id="observaciones" rows="2" class="form-input" placeholder="Observaciones adicionales"></textarea>
 <label class="form-label">Foto de Perfil</label>
@@ -458,30 +454,22 @@ if (!rolUsuario) {
 
 // Si es invitado, aplicar restricciones
 if (rolUsuario === 'invitado') {
-  // Ocultar botones del header que no son "Pase Cinta"
   document.querySelectorAll('.btn-header').forEach(btn => {
     if (btn.id !== 'btn-header-pase-cinta') {
       btn.style.display = 'none';
     }
   });
-  
-  // Ocultar items de navegación que no son "Pase Cinta" ni "Salir"
   document.querySelectorAll('.nav-item').forEach(nav => {
     if (nav.id !== 'nav-salir') {
       nav.style.display = 'none';
     }
   });
-  
-  // Ocultar secciones que no son "Pase Cinta"
   const seccionesRestringidas = ['sec-inscripcion', 'sec-listado-alumnos', 'sec-listado-sensei', 'sec-kata', 'sec-sucursales', 'sec-backup'];
   seccionesRestringidas.forEach(id => {
     const sec = document.getElementById(id);
     if (sec) sec.style.display = 'none';
   });
 }
-
-// La configuración e inicialización de Firebase se carga ahora desde firebase-loader.js
-// IMPORTANTE: Asegúrate de que tu archivo 'firebase-loader.js' exponga la variable 'db' globalmente (ej: window.db = firebase.firestore();)
 
 const ADMIN_PASSWORD = 'dojo2024';
 
@@ -578,7 +566,9 @@ await new Promise(resolve => setTimeout(resolve, 500));
 showToast('success', 'Conexión Exitosa', 'Datos sincronizados con Firebase');
 ocultarPantallaCarga();
 
-// Si es invitado, redirigir automáticamente a Pase Cinta
+// Llenar los combos box dinámicamente apenas carguen los datos
+actualizarSelects();
+
 if (rolUsuario === 'invitado') {
   showSection('pase-cinta');
 }
@@ -620,7 +610,6 @@ return true;
 
 function exitSystem() {
 mostrarModal('Salir del Sistema', '¿Estás seguro que deseas salir del sistema?', () => { 
-  // Limpiar sesión
   localStorage.removeItem('usuario');
   localStorage.removeItem('rol');
   window.location.href = 'index.html'; 
@@ -628,7 +617,6 @@ mostrarModal('Salir del Sistema', '¿Estás seguro que deseas salir del sistema?
 }
 
 function showSection(id) {
-// Validar permisos si es invitado
 if (rolUsuario === 'invitado' && id !== 'pase-cinta') {
   showToast('warning', 'Acceso Restringido', 'Solo tienes acceso a Pase de Cinta');
   return;
@@ -871,8 +859,24 @@ ocultarSpinner();
 }
 
 function actualizarSelects() {
+// 1. Sucursales
 const optsSuc = dbLocal.sucursales.map(s => `<option value="${s.nombre}">${s.nombre}</option>`).join('');
 document.getElementById('sucursalAlumno').innerHTML = '<option value="">Seleccione una sucursal...</option>' + optsSuc;
+
+// 2. Cinturones (Dinámico desde los exámenes registrados en la otra página)
+const iconosCinta = { 'Blanco': '⚪', 'Amarillo': '🟡', 'Verde': '🟢', 'Azul': '🔵', 'Marrón': '🟤', 'Negro': '⚫' };
+const cinturasUnicas = [...new Set(dbLocal.examenes.map(e => e.cinta))];
+let optsCint = '';
+
+if (cinturasUnicas.length > 0) {
+    optsCint = cinturasUnicas.map(color => `<option value="${color}">${iconosCinta[color] || '🎨'} ${color}</option>`).join('');
+} else {
+    // Respaldo por si aún no se han creado exámenes en la otra página
+    optsCint = '<option value="Blanco">⚪ Blanco</option><option value="Amarillo">🟡 Amarillo</option><option value="Verde">🟢 Verde</option><option value="Azul">🔵 Azul</option><option value="Marrón">🟤 Marrón</option><option value="Negro">⚫ Negro</option>';
+}
+document.getElementById('cinturon').innerHTML = '<option value="">Seleccione un cinturón...</option>' + optsCint;
+
+// 3. Alumnos (existente)
 const optsAlum = dbLocal.alumnos.map(a => {
 const tipo = a.tipoInscripcion || 'Alumno';
 return `<option value="${a.id}">${a.nombre} (${a.cinturon}) - ${tipo}</option>`;

@@ -184,12 +184,7 @@ body { font-family: 'Roboto', sans-serif; background: #f5f5f5; }
 <label class="form-label">Nombre del Examen <span class="required">*</span></label>
 <input type="text" id="examenNombre" class="form-input" placeholder="Ej: Examen de Cinturón Amarillo">
 <label class="form-label">Color de Cinta Asociado <span class="required">*</span></label>
-<select id="examenCinta" class="form-select">
-<option value="">Seleccione un color...</option>
-<option value="Blanco">⚪ Blanco</option><option value="Amarillo">🟡 Amarillo</option>
-<option value="Verde">🟢 Verde</option><option value="Azul">🔵 Azul</option>
-<option value="Marrón">🟤 Marrón</option><option value="Negro">⚫ Negro</option>
-</select>
+<input type="text" id="examenCinta" class="form-input" placeholder="Ej: Blanco, Amarillo, Verde, etc.">
 <label class="form-label">Agregar Requisito (Ítem) con Puntaje Máximo</label>
 <div class="add-item-row">
 <input type="text" id="examenItemInput" class="form-input" placeholder="Ej: Técnica de patada" onkeypress="if(event.key==='Enter'){event.preventDefault(); agregarItemExamen();}">
@@ -350,9 +345,9 @@ container.innerHTML = itemsExamenActual.map((item, index) => `<div class="examen
 
 async function guardarExamen() {
 const nombre = document.getElementById('examenNombre').value.trim();
-const cinta = document.getElementById('examenCinta').value;
+const cinta = document.getElementById('examenCinta').value.trim();
 if (!nombre) return showToast('error', 'Nombre Vacío', 'Escribe el nombre del examen');
-if (!cinta) return showToast('error', 'Cinta No Seleccionada', 'Selecciona un color de cinta');
+if (!cinta) return showToast('error', 'Cinta No Seleccionada', 'Escribe un color de cinta');
 if (itemsExamenActual.length === 0) return showToast('error', 'Sin Requisitos', 'Agrega al menos un requisito');
 mostrarSpinner();
 const examenData = { nombre: nombre, cinta: cinta, items: [...itemsExamenActual], fechaCreacion: new Date().toLocaleDateString() };
@@ -424,9 +419,13 @@ if (examenesFiltrados.length === 0) { container.innerHTML = '<p style="text-alig
 const iconosCinta = { 'Blanco': '⚪', 'Amarillo': '🟡', 'Verde': '🟢', 'Azul': '🔵', 'Marrón': '🟤', 'Negro': '⚫' };
 const claseCinta = { 'Blanco': 'cinta-blanco', 'Amarillo': 'cinta-amarillo', 'Verde': 'cinta-verde', 'Azul': 'cinta-azul', 'Marrón': 'cinta-marron', 'Negro': 'cinta-negro' };
 const claseBorde = { 'Blanco': 'border-blanco', 'Amarillo': 'border-amarillo', 'Verde': 'border-verde', 'Azul': 'border-azul', 'Marrón': 'border-marron', 'Negro': 'border-negro' };
+
 container.innerHTML = examenesFiltrados.map(e => {
+// Normalizar el color escrito por el usuario para que coincida con las clases CSS existentes (ej: "blanco" -> "Blanco")
+const colorNormalizado = Object.keys(iconosCinta).find(key => key.toLowerCase() === e.cinta.toLowerCase()) || e.cinta;
+
 const totalPeso = e.items.reduce((sum, item) => sum + (item.peso || 5), 0);
-return `<div class="examen-card ${claseBorde[e.cinta] || ''}"><div class="examen-header"><div class="examen-nombre">${e.nombre}</div><div style="display: flex; gap: 6px;"><button onclick="editarExamen('${e.id}')" class="btn-edit"><i class="fas fa-edit"></i> Editar</button><button onclick="eliminarExamen('${e.id}')" class="btn-danger" style="padding: 6px 14px; font-size: 0.75rem;">Eliminar</button></div></div><div class="examen-cinta ${claseCinta[e.cinta] || ''}">${iconosCinta[e.cinta] || ''} Cinta ${e.cinta}</div><div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 8px;">📅 Creado: ${e.fechaCreacion}${e.fechaModificacion ? ' | ✏️ Modificado: ' + e.fechaModificacion : ''} | 📋 ${e.items.length} requisitos | 🎯 Puntaje máx: ${totalPeso}</div><ul class="examen-items">${e.items.map((item, index) => `<li class="examen-item"><span class="examen-item-numero">${index + 1}</span><span class="examen-item-texto">${item.texto || item}</span><span class="examen-item-peso">P/Max: ${item.peso || 5}</span></li>`).join('')}</ul></div>`;
+return `<div class="examen-card ${claseBorde[colorNormalizado] || ''}"><div class="examen-header"><div class="examen-nombre">${e.nombre}</div><div style="display: flex; gap: 6px;"><button onclick="editarExamen('${e.id}')" class="btn-edit"><i class="fas fa-edit"></i> Editar</button><button onclick="eliminarExamen('${e.id}')" class="btn-danger" style="padding: 6px 14px; font-size: 0.75rem;">Eliminar</button></div></div><div class="examen-cinta ${claseCinta[colorNormalizado] || ''}">${iconosCinta[colorNormalizado] || '🎨'} Cinta ${e.cinta}</div><div style="font-size: 0.75rem; color: #6b7280; margin-bottom: 8px;">📅 Creado: ${e.fechaCreacion}${e.fechaModificacion ? ' | ✏️ Modificado: ' + e.fechaModificacion : ''} | 📋 ${e.items.length} requisitos | 🎯 Puntaje máx: ${totalPeso}</div><ul class="examen-items">${e.items.map((item, index) => `<li class="examen-item"><span class="examen-item-numero">${index + 1}</span><span class="examen-item-texto">${item.texto || item}</span><span class="examen-item-peso">P/Max: ${item.peso || 5}</span></li>`).join('')}</ul></div>`;
 }).join('');
 }
 
